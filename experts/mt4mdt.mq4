@@ -15,8 +15,7 @@ datetime lastTransmissionTime;
 int OnInit()
   {
    lastTransmissionTime = TimeCurrent();
-   // Clear any existing objects on the chart
-   ObjectsDeleteAll();
+   ObjectsDeleteAll();  // Clear any existing objects on the chart
    return(INIT_SUCCEEDED);
   }
 //+------------------------------------------------------------------+
@@ -24,8 +23,7 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
   {
-   // Clean up chart objects on deinitialization
-   ObjectsDeleteAll();
+   ObjectsDeleteAll();  // Clean up chart objects on deinitialization
   }
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
@@ -39,18 +37,19 @@ void OnTick()
    string jsonData = StringFormat("{\"symbol\":\"%s\",\"bid\":%f,\"ask\":%f,\"time\":%d}",
                                   Symbol(), bid, ask, currentTime);
 
-   DrawTextOnChart("BidPrice", "Bid: " + DoubleToString(bid, Digits), 10, 20);
-   DrawTextOnChart("AskPrice", "Ask: " + DoubleToString(ask, Digits), 10, 40);
-   DrawTextOnChart("SendStatus", "Sending Data...", 10, 60);
+   // Move text display back to the top left side of the chart
+   DrawTextOnChart("BidPrice", "Bid: " + DoubleToString(bid, Digits), 10, 20, CORNER_LEFT_UPPER);
+   DrawTextOnChart("AskPrice", "Ask: " + DoubleToString(ask, Digits), 10, 40, CORNER_LEFT_UPPER);
+   DrawTextOnChart("SendStatus", "Sending Data...", 10, 60, CORNER_LEFT_UPPER);
 
    if (currentTime >= lastTransmissionTime + TransmissionInterval)
      {
       int responseCode = sendDataToAPI(DataEndpoint, jsonData);
       
       if(responseCode == 200)
-         DrawTextOnChart("SendStatus", "Data transmitted successfully!", 10, 60);
+         DrawTextOnChart("SendStatus", "Data transmitted successfully!", 10, 60, CORNER_LEFT_UPPER);
       else
-         DrawTextOnChart("SendStatus", "Error transmitting data, response code: " + IntegerToString(responseCode), 10, 60);
+         DrawTextOnChart("SendStatus", "Error transmitting data, response code: " + IntegerToString(responseCode), 10, 60, CORNER_LEFT_UPPER);
 
       lastTransmissionTime = currentTime;
      }
@@ -59,33 +58,32 @@ void OnTick()
 //| Function to send data to the API                                  |
 //+------------------------------------------------------------------+
 int sendDataToAPI(string url, string jsonData)
-{
-    int timeout = 5000;  // Timeout for the HTTP request in milliseconds
-    char post[];
-    StringToCharArray(jsonData, post);
-    char result[1024];
-    string headers = "Content-Type: application/json\r\n";
-    string resultHeaders;
+  {
+   int timeout = 5000;
+   char post[];
+   StringToCharArray(jsonData, post);
+   char result[1024];
+   string headers = "Content-Type: application/json\r\n";
+   string resultHeaders;
 
-    int responseCode = WebRequest("POST", url, headers, "", timeout, post, ArraySize(post) - 1, result, resultHeaders);
+   int responseCode = WebRequest("POST", url, headers, "", timeout, post, ArraySize(post) - 1, result, resultHeaders);
 
-    if (responseCode == -1)
-    {
-        Print("WebRequest failed, error code: ", GetLastError());
-    }
+   if (responseCode == -1)
+   {
+      Print("WebRequest failed, error code: ", GetLastError());
+   }
 
-    return responseCode;
-}
-
+   return responseCode;
+  }
 //+------------------------------------------------------------------+
 //| Function to draw text on the chart                                |
 //+------------------------------------------------------------------+
-void DrawTextOnChart(string name, string text, int x, int y)
+void DrawTextOnChart(string name, string text, int x, int y, int corner)
   {
    if(ObjectFind(0, name) != 0)
    {
       ObjectCreate(0, name, OBJ_LABEL, 0, 0, 0);
-      ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+      ObjectSetInteger(0, name, OBJPROP_CORNER, corner);  // Set the corner position
       ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
       ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
       ObjectSetInteger(0, name, OBJPROP_COLOR, clrWhite);
