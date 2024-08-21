@@ -33,23 +33,28 @@ void OnTick()
    double bid = MarketInfo(Symbol(), MODE_BID);
    double ask = MarketInfo(Symbol(), MODE_ASK);
    datetime currentTime = TimeCurrent();
+   string symbol = Symbol();
+   string timeStr = TimeToString(currentTime, TIME_DATE | TIME_MINUTES);
 
-   string jsonData = StringFormat("{\"symbol\":\"%s\",\"bid\":%f,\"ask\":%f,\"time\":%d}",
-                                  Symbol(), bid, ask, currentTime);
+   // Format the data as a JSON string
+   string jsonData = StringFormat("{\"symbol\":\"%s\",\"bid\":%f,\"ask\":%f,\"time\":\"%s\"}",
+                                  symbol, bid, ask, timeStr);
 
-   // Move text display back to the top left side of the chart
-   DrawTextOnChart("BidPrice", "Bid: " + DoubleToString(bid, Digits), 10, 20, CORNER_LEFT_UPPER);
-   DrawTextOnChart("AskPrice", "Ask: " + DoubleToString(ask, Digits), 10, 40, CORNER_LEFT_UPPER);
-   DrawTextOnChart("SendStatus", "Sending Data...", 10, 60, CORNER_LEFT_UPPER);
+   // Display all relevant data on the chart
+   DrawTextOnChart("Symbol", "Symbol: " + symbol, 10, 20, CORNER_LEFT_UPPER);
+   DrawTextOnChart("BidPrice", "Bid: " + DoubleToString(bid, Digits), 10, 40, CORNER_LEFT_UPPER);
+   DrawTextOnChart("AskPrice", "Ask: " + DoubleToString(ask, Digits), 10, 60, CORNER_LEFT_UPPER);
+   DrawTextOnChart("Time", "Time: " + timeStr, 10, 80, CORNER_LEFT_UPPER);
+   DrawTextOnChart("SendStatus", "Sending Data...", 10, 100, CORNER_LEFT_UPPER);
 
    if (currentTime >= lastTransmissionTime + TransmissionInterval)
      {
       int responseCode = sendDataToAPI(DataEndpoint, jsonData);
       
       if(responseCode == 200)
-         DrawTextOnChart("SendStatus", "Data transmitted successfully!", 10, 60, CORNER_LEFT_UPPER);
+         DrawTextOnChart("SendStatus", "Data transmitted successfully!", 10, 100, CORNER_LEFT_UPPER);
       else
-         DrawTextOnChart("SendStatus", "Error transmitting data, response code: " + IntegerToString(responseCode), 10, 60, CORNER_LEFT_UPPER);
+         DrawTextOnChart("SendStatus", "Error transmitting data, response code: " + IntegerToString(responseCode), 10, 100, CORNER_LEFT_UPPER);
 
       lastTransmissionTime = currentTime;
      }
